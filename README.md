@@ -6,7 +6,7 @@
 
 ## 背景
 
-在一次日常渗透过程中，发现了一台机器可以利用jndi命令执行，但是无法注入内存马，也无法直接上线，所以想到了[https://github.com/sv3nbeast/DnslogCmdEcho](https://github.com/sv3nbeast/DnslogCmdEcho)这一工具来获取一些机器的信息，但是在使用过程中，发现该工具使用的DNS为dig.pm，大家都知道dig.pm已经改为仅接收ipv6的dns请求，所以无法接收到目标机器的请求，而且使用该工具需要执行两个python文件，非常的难受，因此产生了修改该工具的想法。
+在一次日常渗透过程中，发现了一台机器可以利用jndi命令执行，但是无法注入内存马，也无法直接上线，所以想到了[https://github.com/sv3nbeast/DnslogCmdEcho](https://github.com/sv3nbeast/DnslogCmdEcho)这一工具来获取一些机器的信息，但是在使用过程中，发现该工具使用的DNS为dig.pm，但是dig.pm经过一些修改后变得时好时坏，所以无法接收到目标机器的请求，而且使用该工具需要执行两个python文件，非常的难受，因此产生了修改该工具的想法。
 
 ## 修改内容
 
