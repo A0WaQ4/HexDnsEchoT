@@ -32,7 +32,7 @@ options:
 
 
 ```bash
- python3 HexDnsEchoT.py -d YOURCEYE.ceye.io -t YOURCEYETOKEN -c Command
+ python3 HexDnsEchoT.py -d YourCeye.ceye.io -t ceyeToken -c Command
 ```
 
 ![image-20230318021248061](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230318021248061.png)
