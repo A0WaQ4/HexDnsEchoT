@@ -57,7 +57,7 @@ DNS获取到请求，进行解密，获取机器信息
 
 执行成功后自动开启新的filter，无需重新执行直接进行下一步命令执行
 
-![image-20230319185425908](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/image-20230319185425908.png)
+![image-20230319185425908](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185425908.png)
 
 有时会出现目标机器的命令未执行完成，但是已经获取到了一部分结果，可以使用以下命令再次获取结果，本命令已经输出在上次的执行结果中，可直接复制使用
 
