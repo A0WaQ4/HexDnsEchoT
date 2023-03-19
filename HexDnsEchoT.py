@@ -9,6 +9,10 @@ import pytz
 import requests
 from tzlocal import get_localzone
 
+# author: 617sec //https://github.com/Dr-S1x17
+# author: sv3nbeast //https://github.com/sv3nbeast/DnslogCmdEcho
+# author: A0WaQ4 //https://github.com/A0WaQ4/HexDnsEchoT
+
 requestTime = 3 # DNSLog platform interval per request
 commandHex = {}
 
