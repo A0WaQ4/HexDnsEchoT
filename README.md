@@ -17,25 +17,31 @@
 ## 使用
 
 ```bash
-usage: HexDnsEchoT.py [-h] [-d DNSURL] [-t TOKEN] [-c COMMAND]
+usage: HexDnsEchoT.py [-h] [-d DNSURL] [-t TOKEN] [-lt LASTFINISHTIME] [-f FILTER] [-m MODEL]
 
 options:
   -h, --help            show this help message and exit
   -d DNSURL, --dnsurl DNSURL
-                        Enter Your DnsUrl
+                        ceye dnslog
   -t TOKEN, --token TOKEN
-                        Enter Your DnsUrl Token
-  -c COMMAND, --command COMMAND
-                        Enter Command
+                        ceye token
+  -lt LASTFINISHTIME, --lastfinishtime LASTFINISHTIME
+                        the lastfinisgtime
+  -f FILTER, --filter FILTER
+                        dns filter
+  -m MODEL, --model MODEL
+                        recent result
 ```
 
 
 
 ```bash
- python3 HexDnsEchoT.py -d YourCeye.ceye.io -t ceyeToken -c Command
+ python3 HexDnsEchoT.py -d YourCeye.ceye.io -t ceyeToken
 ```
 
-![image-20230318021248061](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230318021248061.png)
+![image-20230319185120315](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185120315.png)
+
+![image-20230319185219861](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185219861.png)
 
 复制输出的命令，在目标机器上执行
 
@@ -48,6 +54,20 @@ DNS获取到请求，进行解密，获取机器信息
 在linux上也可以执行获取结果
 
 ![image-20230318021732464](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230318021732464.png)
+
+执行成功后自动开启新的filter，无需重新执行直接进行下一步命令执行
+
+![image-20230319185425908](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/image-20230319185425908.png)
+
+有时会出现目标机器的命令未执行完成，但是已经获取到了一部分结果，可以使用以下命令再次获取结果，本命令已经输出在上次的执行结果中，可直接复制使用
+
+```shell
+python3 HexDnsEchoT.py -d yourceye.ceye.io -t ceyetoken -f filterstr -lt "上次命令执行的时间" -m GR
+```
+
+![image-20230319185814165](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185814165.png)
+
+![image-20230319185941334](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185941334.png)
 
 ## 总结
 
