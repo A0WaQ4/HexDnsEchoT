@@ -16,7 +16,7 @@
 * 添加获取上一次命令执行结果的功能
 * 兼容zsh
 * 添加自定义dns服务器
-* 实现有参数的命令执行，例如ls -al、type file、cat file等，由此可实现通过DNS读取文件
+* 实现有参数的命令执行，例如`ls -al`、`type file`、`cat file`等，由此可实现通过DNS读取文件
 
 ## 使用
 
