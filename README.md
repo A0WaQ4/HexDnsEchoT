@@ -68,6 +68,10 @@ python3 HexDnsEchoT.py -ds DNS服务器 -tz 服务器时区 -cc dnsurl中点的�
 python3 HexDnsEchoT.py -ds http://dig.pm -tz "UTC" -cc 7
 ```
 
+服务器时区可以使用项目中的`Timezone.py`自行比对
+
+![image-20230320160202914](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320160202914.png)
+
 其中`-cc 7`为下图所示，dnsurl中5个点加2，为7
 
 ![image-20230320152449892](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320152449892.png)
