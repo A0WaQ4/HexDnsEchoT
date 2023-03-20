@@ -15,11 +15,14 @@
 * 合并HexDnsEcho与CommandGen两个文件，使用更加方便
 * 添加获取上一次命令执行结果的功能
 * 兼容zsh
+* 添加自定义dns服务器
 
 ## 使用
 
 ```bash
-usage: HexDnsEchoT.py [-h] [-d DNSURL] [-t TOKEN] [-lt LASTFINISHTIME] [-f FILTER] [-m MODEL]
+usage: HexDnsEchoT.py [-h] [-d DNSURL] [-t TOKEN] [-lt LASTFINISHTIME]
+                      [-f FILTER] [-ds DOMAIN_SERVER] [-tz TIMEZONE]
+                      [-cc COUNT] [-m MODEL]
 
 options:
   -h, --help            show this help message and exit
@@ -31,11 +34,19 @@ options:
                         the lastfinisgtime
   -f FILTER, --filter FILTER
                         dns filter
+  -ds DOMAIN_SERVER, --domain_server DOMAIN_SERVER
+                        domain server
+  -tz TIMEZONE, --timezone TIMEZONE
+                        timezone
+  -cc COUNT, --count COUNT
+                        count counts
   -m MODEL, --model MODEL
                         recent result
 ```
 
+因为ceye仅能保存100个数据，且会出现重复的情况下，添加自定义dns服务器
 
+### Ceye
 
 ```bash
  python3 HexDnsEchoT.py -d YourCeye.ceye.io -t ceyeToken
@@ -44,6 +55,36 @@ options:
 ![image-20230319185120315](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185120315.png)
 
 ![image-20230319185219861](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185219861.png)
+
+### 自定义DNS服务器
+
+```bash
+python3 HexDnsEchoT.py -ds DNS服务器 -tz 服务器时区 -cc dnsurl中点的数量+2
+```
+
+例
+
+```bash
+python3 HexDnsEchoT.py -ds http://dig.pm -tz "UTC" -cc 7
+```
+
+其中`-cc 7`为下图所示，dnsurl中5个点加2，为7
+
+![image-20230320152449892](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320152449892.png)
+
+可能等待结果返回的时间会比较长，请耐心等待
+
+![image-20230320152816358](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320152816358.png)
+
+注意：dig.pm有可能获取结果不稳定，大家可以自己搭建或者寻找其他DNSLOG平台使用，只需要满足为以下项目搭建即可：
+
+[https://github.com/yumusb/DNSLog-Platform-Golang](https://github.com/yumusb/DNSLog-Platform-Golang)
+
+或者是以`http://x.x.x.x/new_gen`获取随机子域名并以`http://x.x.x.x/token`获取dns结果的dnslog平台也可以使用
+
+fofa可以直接搜索`DNSLOG Platform`寻找DNSLOG平台
+
+![image-20230320154414350](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320154414350.png)
 
 复制输出的命令，在目标机器上执行
 
@@ -63,6 +104,8 @@ DNS获取到请求，进行解密，获取机器信息
 
 有时会出现目标机器的命令未执行完成，但是已经获取到了一部分结果，可以使用以下命令再次获取结果，本命令已经输出在上次的执行结果中，可直接复制使用
 
+### Ceye
+
 ```shell
 python3 HexDnsEchoT.py -d yourceye.ceye.io -t ceyetoken -f filterstr -lt "上次命令执行的时间" -m GR
 ```
@@ -70,6 +113,26 @@ python3 HexDnsEchoT.py -d yourceye.ceye.io -t ceyetoken -f filterstr -lt "上次
 ![image-20230319185814165](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185814165.png)
 
 ![image-20230319185941334](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230319185941334.png)
+
+### 自定义DNS服务器
+
+```bash
+python3 HexDnsEchoT.py -ds 自定义DNS服务器 -t 上一次执行的token -lt "上次命令执行的时间" -m GR -cc dnsurl中点的数量
+```
+
+以dig.pm为例
+
+```bash
+python3 HexDnsEchoT.py -ds http://dig.pm -t 上一次执行的token -lt "上次命令执行的时间" -m GR -cc 7
+```
+
+![image-20230320155144665](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320155144665.png)
+
+可能等的时间会比较长，请耐心等待
+
+![image-20230320154805306](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320154805306.png)
+
+
 
 ## 总结
 

