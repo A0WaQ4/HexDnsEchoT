@@ -16,6 +16,7 @@
 * 添加获取上一次命令执行结果的功能
 * 兼容zsh
 * 添加自定义dns服务器
+* 实现有参数的命令执行，例如ls -al、type file、cat file等，由此可实现通过DNS读取文件
 
 ## 使用
 
@@ -135,6 +136,20 @@ python3 HexDnsEchoT.py -ds http://dig.pm -t 上一次执行的token -lt "上次�
 可能等的时间会比较长，请耐心等待
 
 ![image-20230320154805306](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320154805306.png)
+
+有参数的命令执行
+
+```
+ls -al
+```
+
+![image-20230320190108229](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320190108229.png)
+
+```
+type useruid.ini
+```
+
+![image-20230320190148588](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230320190148588.png)
 
 
 

