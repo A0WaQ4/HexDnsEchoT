@@ -18,6 +18,16 @@
 * 添加自定义dns服务器
 * 实现有参数的命令执行，例如`ls -al`、`type file`、`cat file`等，由此可实现通过DNS读取文件
 
+### 2023-03-27 来自r0fus0d(@No-Github)师傅的更新-[支持http basic认证的自建dig.pm](https://github.com/A0WaQ4/HexDnsEchoT/pull/4)
+
+用于存在http basic认证的自建dig.pm
+
+```bash
+python3 HexDnsEchoT.py -ds DNS服务器 -tz 服务器时区 -cc dnsurl中点的数量+2 -u http_basic认证用户 -p http_basic认证密码
+```
+
+![](https://user-images.githubusercontent.com/18167071/227868628-58e221da-3620-431b-9552-49628c699fbd.png)
+
 ## 使用
 
 ```bash
@@ -51,16 +61,6 @@ options:
 ```
 
 因为ceye仅能保存100个数据，且会出现重复的情况下，添加自定义dns服务器
-
-### 2023-03-27 来自r0fus0d(@No-Github)师傅的更新-[支持http basic认证的自建dig.pm](https://github.com/A0WaQ4/HexDnsEchoT/pull/4)
-
-用于存在http basic认证的自建dig.pm
-
-```bash
-python3 HexDnsEchoT.py -ds DNS服务器 -tz 服务器时区 -cc dnsurl中点的数量+2 -u http_basic认证用户 -p http_basic认证密码
-```
-
-![](https://user-images.githubusercontent.com/18167071/227868628-58e221da-3620-431b-9552-49628c699fbd.png)
 
 ### Ceye
 
