@@ -23,29 +23,44 @@
 ```bash
 usage: HexDnsEchoT.py [-h] [-d DNSURL] [-t TOKEN] [-lt LASTFINISHTIME]
                       [-f FILTER] [-ds DOMAIN_SERVER] [-tz TIMEZONE]
-                      [-cc COUNT] [-m MODEL]
+                      [-cc COUNT] [-m MODEL] [-u HTTPBASICUSER]
+                      [-p HTTPBASICPASS]
 
 options:
   -h, --help            show this help message and exit
   -d DNSURL, --dnsurl DNSURL
-                        ceye dnslog
+                        Ceye Dnslog
   -t TOKEN, --token TOKEN
-                        ceye token
+                        Dns Server Token or CeyeToken
   -lt LASTFINISHTIME, --lastfinishtime LASTFINISHTIME
-                        the lastfinisgtime
+                        The LastFinishTime
   -f FILTER, --filter FILTER
-                        dns filter
+                        Dns Filter
   -ds DOMAIN_SERVER, --domain_server DOMAIN_SERVER
-                        domain server
+                        Domain Server
   -tz TIMEZONE, --timezone TIMEZONE
-                        timezone
+                        Timezone
   -cc COUNT, --count COUNT
-                        count counts
+                        Count Counts
   -m MODEL, --model MODEL
-                        recent result
+                        Recent Result
+  -u HTTPBASICUSER, --httpbasicuser HTTPBASICUSER
+                        HTTPBasicAuth User
+  -p HTTPBASICPASS, --httpbasicpass HTTPBASICPASS
+                        HTTPBasicAuth Pass
 ```
 
 因为ceye仅能保存100个数据，且会出现重复的情况下，添加自定义dns服务器
+
+### 2023-03-27 来自r0fus0d(@No-Github)师傅的更新-[支持http basic认证的自建dig.pm](https://github.com/A0WaQ4/HexDnsEchoT/pull/4)
+
+用于存在http basic认证的自建dig.pm
+
+```bash
+python3 HexDnsEchoT.py -ds DNS服务器 -tz 服务器时区 -cc dnsurl中点的数量+2 -u http_basic认证用户 -p http_basic认证密码
+```
+
+![](https://user-images.githubusercontent.com/18167071/227868628-58e221da-3620-431b-9552-49628c699fbd.png)
 
 ### Ceye
 
