@@ -9,6 +9,7 @@ import pytz
 import requests
 import re
 from tzlocal import get_localzone
+from requests.auth import HTTPBasicAuth
 
 # author: 617sec //https://github.com/Dr-S1x17
 # author: sv3nbeast //https://github.com/sv3nbeast/DnslogCmdEcho
@@ -31,7 +32,10 @@ def get_new_config():
 def get_ds_config():
     global time_zone,domain_server,count_counts,domain,dnsurl,token,command,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
     url = domain_server + '/new_gen'
-    dataResult = json.loads(requests.get(url,verify=False).text)
+    if args.httpbasicuser == None:
+        dataResult = json.loads(requests.get(url,verify=False).text)
+    else:
+        dataResult = json.loads(requests.get(url,verify=False,auth=HTTPBasicAuth(args.httpbasicuser, args.httpbasicpass)).text)
     domain = dataResult['domain']
     dnsurl = domain
     token = dataResult['token']
@@ -217,6 +221,8 @@ if __name__ == "__main__":
     parser.add_argument('-tz', "--timezone", help = "timezone")
     parser.add_argument('-cc', "--count", help = "count counts")
     parser.add_argument('-m', "--model", help = "recent result", default = "result")
+    parser.add_argument('-u', "--httpbasicuser", help="HTTPBasicAuth User")
+    parser.add_argument('-p', "--httpbasicpass", help="HTTPBasicAuth Pass")
     args = parser.parse_args()
     if args.domain_server == None:
         if args.model == "GR":
@@ -310,7 +316,10 @@ if __name__ == "__main__":
             else:
                 url = domain_server + '/' +token
             #proxies = { 'http':'http://127.0.0.1:8080' }
-            result = json.loads(requests.get(url, proxies=False, verify=False).text.lower())
+            if args.httpbasicuser == None:
+                result = json.loads(requests.get(url, proxies=False, verify=False).text.lower())
+            else:
+                result = json.loads(requests.get(url, proxies=False, verify=False,auth=HTTPBasicAuth(args.httpbasicuser, args.httpbasicpass)).text.lower())
             if args.domain_server == None:
                 result = result['data']
                 if result == []:
