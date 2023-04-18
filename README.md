@@ -18,6 +18,36 @@
 * 添加自定义dns服务器
 * 实现有参数的命令执行，例如`ls -al`、`type file`、`cat file`等，由此可实现通过DNS读取文件
 
+### 2023-04-18 支持分片传输
+
+用于服务器存在发送限制，一个url仅能发送限定次数的情况
+
+以dig.pm为例(因为dig.pm存在dns数据接收不全，漏数据情况，与本次更新遇到的情况十分类似，故使用dig.pm演示，为了更好的使用，推荐大家寻找其他的自建di g.pm)
+
+1.正常使用工具；
+
+![image-20230418164449448](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230418164449448.png)
+
+2.当发现接收到的数据缺少或者不全时，会输出类似`发现中断，缺少第4行的数据，下一次执行将从第4行开始`的结果，同时若发现接收的数据存在最后一行时会出现`疑似为最后一块，请输入Y/N决定是否开始处理数据`，若没有上一句话可以选择`Y`，此处我们选择`N`；
+
+![image-20230418164700806](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230418164700806.png)
+
+3.选择`N`后继续执行，会输出我们下一步需要执行的语句，复制到靶机执行即可；
+
+![image-20230418164824583](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230418164824583.png)
+
+4.数据不全会一直执行，需要不断将命令复制到靶机上执行；
+
+![image-20230418164946198](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230418164946198.png)
+
+5.一直到最后没有出现`发现中断，缺少第4行的数据，下一次执行将从第4行开始`的类似字样，我们选择`Y`，即可获取执行结果；
+
+![image-20230418165203133](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230418165203133.png)
+
+6.同时也会输出`获取本次命令执行结果`的语句，若想要再次获取执行结果，直接复制粘贴使用即可。
+
+![image-20230418165405984](https://github.com/A0WaQ4/HexDnsEchoT/blob/main/img/image-20230418165405984.png)
+
 ### 2023-03-27 来自r0fus0d(@No-Github)师傅的更新-[支持http basic认证的自建dig.pm](https://github.com/A0WaQ4/HexDnsEchoT/pull/4)
 
 用于存在http basic认证的自建dig.pm
