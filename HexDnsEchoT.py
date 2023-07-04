@@ -24,7 +24,7 @@ def get_new_config():
     localTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) # get localtime
     lastFinishTime = timezone_change(localTime, src_timezone=str(get_localzone()), dst_timezone="UTC") # record last finish time
     print(lastFinishTime)
-    print("获取本次命令执行的结果:\npython3 HexDnsEchoT.py -d " + domain + " -t " + token + " -f " + filterdns + " -lt \"" + lastFinishTime + "\"" + " -m GR")
+    print("获取本次命令执行的结果:\npython3 HexDnsEchoT.py -d " + domain + " -t " + token + " -f " + filterdns + " -lt \"" + lastFinishTime + "\"" + " -m GR --force")
     commandStartPos = 0
     commandEndPos = 0
     lastRecordLen = 0
@@ -44,7 +44,7 @@ def get_ds_config():
     localTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) # get localtime
     lastFinishTime = timezone_change(localTime, src_timezone=str(get_localzone()), dst_timezone=time_zone) # record last finish time
     lastFinishTimes = lastFinishTime
-    print("\n获取本次命令执行结果:\npython3 HexDnsEchoT.py -ds " + domain_server + " -t " + token + " -lt \"" + lastFinishTime + "\" -m GR -cc " + str(count_counts) + "\n")
+    print("\n获取本次命令执行结果:\npython3 HexDnsEchoT.py -ds " + domain_server + " -t " + token + " -lt \"" + lastFinishTime + "\" -m GR -cc " + str(count_counts) + " --force\n")
     print(domain_server + '/' +token)
     # dig.pm's timezone is utc，need to change timezone
     print(lastFinishTime)
@@ -78,7 +78,7 @@ def get_piece_config():
     localTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) # get localtime
     lastFinishTime = timezone_change(localTime, src_timezone=str(get_localzone()), dst_timezone="Asia/Shanghai") # record last finish time
     lastFinishTimes = lastFinishTimes + "," + lastFinishTime
-    print("\n获取本次命令执行结果:\npython3 HexDnsEchoT.py -ds " + domain_server +" -t " +  tokens + " -lt \"" + lastFinishTimes + "\" -m GR -cc " + str(count_counts) + "\n")
+    print("\n获取本次命令执行结果:\npython3 HexDnsEchoT.py -ds " + domain_server +" -t " +  tokens + " -lt \"" + lastFinishTimes + "\" -m GR -cc " + str(count_counts) + " --force\n")
     print(domain_server+'/'+token)
     # dig.pm's timezone is utc，need to change timezone
     print(lastFinishTime)
@@ -274,6 +274,7 @@ if __name__ == "__main__":
     parser.add_argument('-m', "--model", help = "recent result", default = "result")
     parser.add_argument('-u', "--httpbasicuser", help="HTTPBasicAuth User")
     parser.add_argument('-p', "--httpbasicpass", help="HTTPBasicAuth Pass")
+    parser.add_argument("--force", action="store_true" , help = "force deal_ds_data")
     args = parser.parse_args()
     if args.domain_server == None:
         if args.model == "GR":
@@ -468,15 +469,25 @@ if __name__ == "__main__":
                 getResult = True
                 if operator.contains(responsestxt,"31313131") or operator.contains(responsestxt,"0a31"):
                     get_line(dataList)
-                    judgeDealData = input("\n疑似为最后一块，请输入Y/N决定是否开始处理数据：").lower()
+                    if not args.force:
+                        judgeDealData = input("\n疑似为最后一块，请输入Y/N决定是否开始处理数据：").lower()
                 else:
                     get_line(dataDns)
                     # print("本次获取到的数据为"+len(result)+"行")
-                    print("\n未发现结束符号，继续执行")
+                    if not args.force:
+                        print("\n未发现结束符号，继续执行")
             
             if judgeDealData == "y":
                 deal_ds_data(dataList)
             else:
-                if not dataDns == None and not getGR:
+                if args.force:
+                    if operator.contains(args.token,","):
+                        if l == len(tokensList) - 1:
+                            deal_data(dataList)
+                        else:
+                            l =l + 1
+                    else:
+                        deal_data(dataList)
+                elif not dataDns == None and not getGR:
                     l = l + 1
-                    print(l)
+                    # print(l)
