@@ -19,6 +19,22 @@
 * 实现有参数的命令执行，例如`ls -al`、`type file`、`cat file`等，由此可实现通过DNS读取文件
 * 实现分片传输，在发送数据次数存在限制的情况下使用不同`dnslog`子域获取结果
 * 添加`--force`功能，重复获取结果的情况下未发现结尾字符时强行进行解密
+* 容器环境默认没有装 hexdump，大部分容器环境自带 od 工具，在容器环境下使用"-l od"或"-l xxd"进行编码
+
+### 2023-08-20 来自r0fus0d([@No-Github](https://github.com/No-Github))师傅的更新-[支持od,xxd](https://github.com/A0WaQ4/HexDnsEchoT/pull/6)
+部分容器环境默认没有装 hexdump，大部分容器环境自带 od 工具,选择使用od或xxd进行编码
+
+```bash
+python3 HexDnsEchoT.py -ds DNS服务器 -tz 服务器时区 -cc dnsurl中点的数量+2 -u http_basic认证用户 -p http_basic认证密码 -l od
+```
+
+![image-20230705003306611](https://user-images.githubusercontent.com/18167071/261841065-60141879-2b22-49e7-941f-19dd8418f337.png)
+
+```bash
+python3 HexDnsEchoT.py -ds DNS服务器 -tz 服务器时区 -cc dnsurl中点的数量+2 -u http_basic认证用户 -p http_basic认证密码 -l xxd
+```
+
+![image-20230705003306611](https://user-images.githubusercontent.com/18167071/261841018-921a0aea-1954-40c0-9cd1-bd077954f99b.png)
 
 ### 2023-07-05 添加`--force`强行解密
 
