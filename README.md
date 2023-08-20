@@ -22,7 +22,7 @@
 * 容器环境默认没有装 hexdump，大部分容器环境自带 od 工具，在容器环境下使用"-l od"或"-l xxd"进行编码
 
 ### 2023-08-20 来自r0fus0d([@No-Github](https://github.com/No-Github))师傅的更新-[支持od,xxd](https://github.com/A0WaQ4/HexDnsEchoT/pull/6)
-部分容器环境默认没有装 hexdump，大部分容器环境自带 od 工具,选择使用od或xxd进行编码
+部分容器环境默认没有装 hexdump，大部分容器环境自带 od 工具，选择使用od或xxd进行编码
 
 ```bash
 python3 HexDnsEchoT.py -ds DNS服务器 -tz 服务器时区 -cc dnsurl中点的数量+2 -u http_basic认证用户 -p http_basic认证密码 -l od
